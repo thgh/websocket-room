@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width" name="viewport" />
+    <meta content="#f69" name="theme-color" />
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      textarea {
+        width: 100%;
+      }
+    </style>
+    <script>
+      const ws = connectable()
+      ws.subscribe(function(event) {
+        myTextarea.value = event.data
+      })
+
+      function sync(evt) {
+        evt.preventDefault()
+        if (myTextarea.value !== event.data) {
+          (ws.send(myTextarea.value))
+        }
+      }
+      function connectable() {
+        const subs = []
+        let timeout = 60000
+        let ws
+        connect()
+
+        function connect () {
+          ws = new WebSocket(window.location.href.replace('http', 'ws'))
+          ws.onclose = function () {
+            // console.log('close', timeout);
+            ws = null;
+            setTimeout(() => {
+              timeout += 1000
+              connect();
+            }, timeout);
+          }
+          ws.onerror = function () {
+            ws.close()
+          }
+          ws.onopen = function () {
+            timeout = 1000
+          }
+          ws.onmessage = function (event) {
+            subs.forEach(sub => sub(event))
+          }
+        }
+
+        return {
+          subscribe (handler) {
+            subs.push(handler)
+          },
+          send (data) {
+            if (ws && ws.readyState === ws.OPEN) {
+              return ws.send(data)
+            } else {
+              console.error('Not open', ws)
+            }
+          }
+        }
+      }
+      
+    </script>
+  </head>
+  <body>
+    <form id="form">
+      <textarea name="data" id="myTextarea" rows="3" oninput="sync(event)"></textarea>
+    </form>
+    <div id="log"></div>
+  </body>
+</html>
