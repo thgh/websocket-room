@@ -6,71 +6,71 @@
     <meta content="#f69" name="theme-color" />
     <style>
       body {
+        background: black;
+        color: white;
         font-family: sans-serif;
       }
+      @media (prefers-color-scheme: light) {
+        p {
+          background: white;
+          color: black;
+        }
+      }
+      form {
+        padding: 2em;
+        height: 100vh;
+        line-height: 2em;
+      }
+      label {
+        font-family: consolas, monospace;
+        opacity: .5;
+      }
       textarea {
+        border: 2px solid #444;
+        border-radius: 4px;
+        padding: 0.5em;
+        font-size: 24px;
         width: 100%;
+        background: none;
+        color: inherit;
+        outline: none;
+        box-sizing: border-box;
+        resize: vertical;
       }
     </style>
-    <script>
-      const ws = connectable()
-      ws.subscribe(function(event) {
-        myTextarea.value = event.data
+    <script type="module">
+      import { connectable } from '/connectable.js'
+      const ws = connectable(window.location.href.replace('http', 'ws'))
+      ws.subscribe(data => {
+        if (data === undefined) {
+          return ws.send(':hello')
+        }
+        if (data === ':hello') {
+          return ws.send(myTextarea.value)
+        }
+        myTextarea.value = data
       })
 
       function sync(evt) {
         evt.preventDefault()
-        if (myTextarea.value !== event.data) {
-          (ws.send(myTextarea.value))
-        }
+        ws.send(myTextarea.value)
       }
-      function connectable() {
-        const subs = []
-        let timeout = 60000
-        let ws
-        connect()
-
-        function connect () {
-          ws = new WebSocket(window.location.href.replace('http', 'ws'))
-          ws.onclose = function () {
-            // console.log('close', timeout);
-            ws = null;
-            setTimeout(() => {
-              timeout += 1000
-              connect();
-            }, timeout);
-          }
-          ws.onerror = function () {
-            ws.close()
-          }
-          ws.onopen = function () {
-            timeout = 1000
-          }
-          ws.onmessage = function (event) {
-            subs.forEach(sub => sub(event))
-          }
-        }
-
-        return {
-          subscribe (handler) {
-            subs.push(handler)
-          },
-          send (data) {
-            if (ws && ws.readyState === ws.OPEN) {
-              return ws.send(data)
-            } else {
-              console.error('Not open', ws)
-            }
-          }
-        }
-      }
-      
+      window.sync = sync
     </script>
   </head>
   <body>
     <form id="form">
-      <textarea name="data" id="myTextarea" rows="3" oninput="sync(event)"></textarea>
+      <label id="label" for="myTextarea">Listening to room</label>
+      <textarea
+        name="data"
+        id="myTextarea"
+        rows="3"
+        oninput="sync(event)"
+      ></textarea>
     </form>
     <div id="log"></div>
+    <script>
+      label.innerText = 'Listening to room ' + window.location.pathname
+    </script>
   </body>
 </html>

@@ -42,17 +42,20 @@ wss.on('connection', function(ws, req) {
 
   ws.on('error', function(err) {
     console.log(roomName, 'error', err.message)
-    ws.close();
+    ws.close()
   })
 })
 
 // HTTP
 
-function index(req, res) {
-  res.sendFile(path.join(__dirname + '/public/index.html'));
+function serve(filename) {
+  return (req, res) => {
+    res.sendFile(path.join(__dirname + '/public' + (filename || req.path)))
+  }
 }
-app.get('/', index);
-app.get('/:foo', index);
+app.get('/connectable.js', serve())
+app.get('/', serve('/index.html'))
+app.get('/:foo', serve('/index.html'))
 
 server.on('request', app)
 server.listen(port, function() {

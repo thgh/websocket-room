@@ -1,10 +1,15 @@
 {
+  "name": "websocket-room",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.16.4",
-    "nodemon": "^1.18.10",
     "ws": "^6.2.0"
   },
-  "scripts": {
-    "start": "node index.js"
+  "devDependencies": {
+    "nodemon": "^1.18.10"
   }
 }
